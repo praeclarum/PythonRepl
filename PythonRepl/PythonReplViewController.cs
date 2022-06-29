@@ -25,8 +25,9 @@ namespace PythonRepl
 
         readonly UITextField inputField = new UITextField
         {
-            Font = CodeFont,
             TranslatesAutoresizingMaskIntoConstraints = false,
+            BackgroundColor = UIColor.SystemBackground,
+            Font = CodeFont,
             AutocorrectionType = UITextAutocorrectionType.No,
             AutocapitalizationType = UITextAutocapitalizationType.None,
             SmartQuotesType = UITextSmartQuotesType.No,
@@ -34,12 +35,10 @@ namespace PythonRepl
             SmartInsertDeleteType = UITextSmartInsertDeleteType.No,
         };
         readonly UIButton inputButton = UIButton.FromType(UIButtonType.RoundedRect);
-        readonly UIStackView inputPanel = new UIStackView
+        readonly UIView inputPanel = new UIView
         {
             TranslatesAutoresizingMaskIntoConstraints = false,
-            Axis = UILayoutConstraintAxis.Horizontal,
-            Alignment = UIStackViewAlignment.FirstBaseline,
-            Distribution = UIStackViewDistribution.Fill,
+            BackgroundColor = UIColor.SecondarySystemBackground,
         };
 
         readonly UITableView historyView = new UITableView(UIScreen.MainScreen.Bounds, UITableViewStyle.Plain);
@@ -50,12 +49,12 @@ namespace PythonRepl
         {
             inputButton.TranslatesAutoresizingMaskIntoConstraints = false;
             inputButton.SetTitle("Run", UIControlState.Normal);
-            inputPanel.AddArrangedSubview(inputField);
-            inputPanel.AddArrangedSubview(inputButton);
+            inputPanel.AddSubview(inputField);
+            inputPanel.AddSubview(inputButton);
             Title = "Python in Xamarin";
         }
 
-        public override void ViewDidLoad()
+        public override async void ViewDidLoad()
         {
             base.ViewDidLoad();
 
@@ -67,9 +66,6 @@ namespace PythonRepl
             historyView.DataSource = history;
             historyView.TranslatesAutoresizingMaskIntoConstraints = false;
 
-            inputField.BackgroundColor = UIColor.SystemBackground;
-            inputPanel.BackgroundColor = UIColor.TertiarySystemBackground;
-
             view.AddConstraints(new[] {
                 NSLayoutConstraint.Create(view.LayoutMarginsGuide, NSLayoutAttribute.Left, NSLayoutRelation.Equal, historyView, NSLayoutAttribute.Left, 1, 0),
                 NSLayoutConstraint.Create(view.LayoutMarginsGuide, NSLayoutAttribute.Right, NSLayoutRelation.Equal, historyView, NSLayoutAttribute.Right, 1, 0),
@@ -78,8 +74,16 @@ namespace PythonRepl
 
                 NSLayoutConstraint.Create(view, NSLayoutAttribute.Left, NSLayoutRelation.Equal, inputPanel, NSLayoutAttribute.Left, 1, 0),
                 NSLayoutConstraint.Create(view, NSLayoutAttribute.Right, NSLayoutRelation.Equal, inputPanel, NSLayoutAttribute.Right, 1, 0),
-                view.KeyboardLayoutGuide.TopAnchor.ConstraintEqualTo(inputPanel.BottomAnchor),
-                NSLayoutConstraint.Create(inputPanel, NSLayoutAttribute.Height, NSLayoutRelation.Equal, inputField, NSLayoutAttribute.Height, 1, 22),
+                NSLayoutConstraint.Create(view, NSLayoutAttribute.Bottom, NSLayoutRelation.Equal, inputPanel, NSLayoutAttribute.Bottom, 1, 0),
+
+                NSLayoutConstraint.Create(view.LayoutMarginsGuide, NSLayoutAttribute.Left, NSLayoutRelation.Equal, inputField, NSLayoutAttribute.Left, 1, -22),
+                NSLayoutConstraint.Create(view.LayoutMarginsGuide, NSLayoutAttribute.Right, NSLayoutRelation.Equal, inputButton, NSLayoutAttribute.Right, 1, 22),
+
+                NSLayoutConstraint.Create(inputButton, NSLayoutAttribute.Top, NSLayoutRelation.Equal, inputPanel, NSLayoutAttribute.Top, 1, 11),
+                NSLayoutConstraint.Create(inputButton, NSLayoutAttribute.Left, NSLayoutRelation.Equal, inputField, NSLayoutAttribute.Right, 1, 22),
+                NSLayoutConstraint.Create(inputField, NSLayoutAttribute.Baseline, NSLayoutRelation.Equal, inputButton, NSLayoutAttribute.Baseline, 1, 0),
+
+                view.KeyboardLayoutGuide.TopAnchor.ConstraintEqualTo(inputField.BottomAnchor, 16),
             });
 
             inputField.ShouldReturn = (x) =>
@@ -88,6 +92,10 @@ namespace PythonRepl
                 return false;
             };
             inputButton.TouchUpInside += (x, y) => HandleInput();
+
+            await AddItemAsync(new HistoryItem("1 + 2"));
+            await AddItemAsync(new HistoryItem("def f(x): return 1000*x"));
+            await AddItemAsync(new HistoryItem("f(5)"));
         }
 
         public override void ViewWillAppear(bool animated)
@@ -103,30 +111,43 @@ namespace PythonRepl
             if (!string.IsNullOrWhiteSpace(newItem.Code))
             {
                 inputField.AttributedText = PrettyPrint("");
-                history.AddInput(newItem);
-                var indexPath = NSIndexPath.FromRowSection(initialItemCount, 0);
-                historyView.InsertRows(new[] { indexPath }, UITableViewRowAnimation.Bottom);
-                historyView.ScrollToRow(indexPath, UITableViewScrollPosition.Bottom, true);
-                newItem.Result = (await Task.Run(() =>
-                {
-                    try
-                    {
-                        var (eng, scope) = python.Value;
-                        var r = eng.Execute(newItem.Code, scope);
-                        return Repr(r, eng, scope);
-                    }
-                    catch (Exception ex)
-                    {
-                        return ex.Message;
-                    }
-                }));
-                historyView.ReloadRows(new[] { indexPath }, UITableViewRowAnimation.None);
+                await AddItemAsync(newItem);
             }
             else if (initialItemCount > 0)
             {
                 var indexPath = NSIndexPath.FromRowSection(initialItemCount - 1, 0);
                 historyView.ScrollToRow(indexPath, UITableViewScrollPosition.Bottom, true);
             }
+        }
+
+        async Task AddItemAsync(HistoryItem newItem)
+        {
+            //
+            // Add and show the new item
+            //
+            var initialItemCount = history.RowsInSection(historyView, 0);
+            history.AddInput(newItem);
+            var indexPath = NSIndexPath.FromRowSection(initialItemCount, 0);
+            historyView.InsertRows(new[] { indexPath }, UITableViewRowAnimation.Bottom);
+            historyView.ScrollToRow(indexPath, UITableViewScrollPosition.Bottom, true);
+
+            //
+            // Eval and show the result
+            //
+            newItem.Result = (await Task.Run(() =>
+            {
+                try
+                {
+                    var (eng, scope) = python.Value;
+                    var r = eng.Execute(newItem.Code, scope);
+                    return Repr(r, eng, scope);
+                }
+                catch (Exception ex)
+                {
+                    return ex.Message;
+                }
+            }));
+            historyView.ReloadRows(new[] { indexPath }, UITableViewRowAnimation.None);
         }
 
         static string? Repr(dynamic value, ScriptEngine eng, ScriptScope scope)
@@ -161,7 +182,7 @@ namespace PythonRepl
 
         class HistoryData : UITableViewDataSource
         {
-            List<HistoryItem> items = new List<HistoryItem>();
+            readonly List<HistoryItem> items = new();
 
             public HistoryData()
             {
