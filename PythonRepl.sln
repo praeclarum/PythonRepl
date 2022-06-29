@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 25.0.1703.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PythonRepl", "PythonRepl\PythonRepl.csproj", "{4CE13820-64A4-495E-BDF1-784E4FD26ACA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|iPhoneSimulator = Debug|iPhoneSimulator
+		Release|iPhoneSimulator = Release|iPhoneSimulator
+		Debug|iPhone = Debug|iPhone
+		Release|iPhone = Release|iPhone
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4CE13820-64A4-495E-BDF1-784E4FD26ACA}.Debug|iPhoneSimulator.ActiveCfg = Debug|iPhoneSimulator
+		{4CE13820-64A4-495E-BDF1-784E4FD26ACA}.Debug|iPhoneSimulator.Build.0 = Debug|iPhoneSimulator
+		{4CE13820-64A4-495E-BDF1-784E4FD26ACA}.Release|iPhoneSimulator.ActiveCfg = Release|iPhoneSimulator
+		{4CE13820-64A4-495E-BDF1-784E4FD26ACA}.Release|iPhoneSimulator.Build.0 = Release|iPhoneSimulator
+		{4CE13820-64A4-495E-BDF1-784E4FD26ACA}.Debug|iPhone.ActiveCfg = Debug|iPhone
+		{4CE13820-64A4-495E-BDF1-784E4FD26ACA}.Debug|iPhone.Build.0 = Debug|iPhone
+		{4CE13820-64A4-495E-BDF1-784E4FD26ACA}.Release|iPhone.ActiveCfg = Release|iPhone
+		{4CE13820-64A4-495E-BDF1-784E4FD26ACA}.Release|iPhone.Build.0 = Release|iPhone
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BA0800E8-6168-4A65-BD2D-CE3305D02565}
+	EndGlobalSection
+EndGlobal
