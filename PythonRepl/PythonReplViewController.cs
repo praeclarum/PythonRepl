@@ -132,7 +132,6 @@ namespace PythonRepl
         static string? Repr(dynamic value, ScriptEngine eng, ScriptScope scope)
         {
             if (value is null) return null;
-            if (value is string s) return $"\"{s}\"";
 
             scope.SetVariable("__r__", value);
             var repr = eng.Execute("repr(__r__)", scope);
